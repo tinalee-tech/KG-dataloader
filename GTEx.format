@@ -1,0 +1,73 @@
+# GTEx eQTL data format
+# all contents after '#' are comments and will not be loaded
+# all '{}'s are regular expressions, but the data type has to be defined in a block
+
+>format_type
+# indicate whether data file is in tabular format or matrix format
+# 0: tabular, 1: matrix
+0
+
+>file_name # If it is not a regular expression, this part is not important and you can provide anything
+{tissue}.v{version}.signif_variant_gene_pairs.txt.gz # can only have 1 line
+
+>headers # number of header lines
+1 # can only have 1 line
+
+>graph_pattern # all nodes and edges and their labels
+node:A{
+    label = variant
+}
+node:B{
+    label = gene
+}
+edge:C{
+    label = correlated_with,  # label don't contain spaces (neo4j format restriction)
+    from = A,
+    to = B
+}
+
+>line_format
+# column_name column_information (the order must be right! And all columns have to be present!)
+# if that column is not important, just put a "None" (actually anything without a '{}' would work)
+variant_id chr{A.chr_num}_{A.pos}_{A.ref}_{A.alt}_b38 # chr1_665098_G_A_b38, variant ID in the format {chr}_{pos_first_ref_base}_{ref_seq}_{alt_seq}_b38
+gene_id {B.id}.{B.id_version} # ENSG00000227232.5, GENCODE/Ensembl gene ID
+tss_distance {C.distance} # distance between variant and transcription start site.
+ma_samples None # number of samples carrying the minor allele
+ma_count None # total number of minor alleles across individuals
+maf  None # minor allele frequency observed in the set of donors for a given tissue
+pval_nominal {C.pval_nominal} # nominal p-value
+slope {C.slope} # regression slope
+slope_se {C.slope_standard_error} # standard error of the regression slope
+pval_nominal_threshold {C.pval_nominal_threshold} # nominal p-value threshold for calling a variant-gene pair significant for the gene
+min_pval_nominal {C.min_pval_nominal} # smallest nominal p-value for the gene
+pval_beta {C.pval_beta} # beta-approximated permutation p-value for the gene
+
+>global_variables
+# variables that apply to all nodes/edges
+C.tissue = {tissue} (str)
+C.GTEx_version = {version} (int)
+C.GTEx_version = {version} (int)
+# A.caller_version = 0.5 (float)  # this line is just for test
+
+>node_attributes
+# record the attributes and their data types that will be in the graph (from the tabular data, not including the global ones)
+A.chr_num (int)
+A.pos (int)
+A.ref (str)
+A.alt (str)
+B.id (str)
+C.distance (int)
+C.slope (float)
+C.pval_nominal (float)
+
+>node_primary_keys
+# specify the attributes to be matched (primary keys) for a node when merging into neo4j database (edges don't have primary keys)
+# on match renew other attributes
+# otherwise create new node
+A.chr_num (int)
+A.pos (int)
+A.ref (str)
+A.alt (str)
+B.id (str)
+
+

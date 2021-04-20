@@ -1,0 +1,56 @@
+# GTEx eQTL gene_median_tpm data format
+# all contents after '#' are comments and will not be loaded
+# all '{}'s are regular expressions, but the data type has to be defined in a block
+
+>format_type
+# indicate whether data file is in tabular format or matrix format
+# 0: tabular, 1: matrix
+1
+
+>file_name # If it is not a regular expression, this part is not important and you can provide anything
+None
+
+>headers
+# number of header lines not including the first row of matrix definition (different from tabular data format)
+2
+
+>graph_pattern # all nodes and edges and their labels
+node:A{  # For matrix format, node A is taken as the dimension 1 node
+    label = gene
+}
+node:B{  # node B is the dimension 2 node
+    label = tissue
+}
+edge:C{
+    label = express_in,  # label don't contain spaces (neo4j format restriction)
+    from = A,
+    to = B
+}
+
+>line_format
+# column_name attribute_name
+# Note the order must be right! And the columns (not including the last "others") listed are the first k columns that're attributes for dimension 1 node.
+# IMPORTANT: The last line must be 'others', indicating all other columns left are the attribute of dimension 2 node
+#       e.g. others {B.name}
+Name {A.id}.{A.id_version}  # ENSG00000227232.5, GENCODE/Ensembl gene ID
+Description {A.description}
+others {B.name}
+
+>global_variables
+# variables that apply to all nodes/edges
+C.median_expression_value = x (float)  # if value is x, means this variable is the edge property of this matrix file
+
+>node_attributes
+# record the attributes and their data types that will be in the graph (from the matrix data, not including the global ones)
+A.id (str)
+A.description (str)
+B.name (str)
+
+>node_primary_keys
+# specify the attributes to be matched (primary keys) for a node when merging into neo4j database (edges don't have primary keys)
+# on match renew other attributes
+# otherwise create new node
+A.id (str)
+B.name (str)
+
+
