@@ -25,3 +25,13 @@ The optional arguments are:
   * [-i URI]: The URL of the neo4j knowledge base. Without specification, by default usesbolt://localhost:7687
   
 Upon successful compilation of the program, users will first be prompted for neo4j database usernameand password in the terminal. After successful logging in, the dataloader will start to load data as in-tended.
+
+## Examples
+
+```
+python3 load_data.py GTEx.format ./GTEx/GTEx_Analysis_v8_eQTL
+```
+
+This command will load every datafile under the path ./GTEx/GTEx\_Analysis\_v8\_eQTL into the database that's currently running on bolt://localhost:7687 using the given GTEx.format file. 
+
+Note: it will be assumed that all file under this same directory share the same format.
