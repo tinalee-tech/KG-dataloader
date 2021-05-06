@@ -38,7 +38,7 @@ def parse_format(format_file):
     # record all required information
     info_included = {elm: False for elm in [
         'format_type', 'file_name', 'headers', 'graph_pattern', 'line_format',
-        'global_variables', 'node_attributes', 'node_primary_keys'
+        'global_variables', 'node_attributes', 'node_primary_keys', 'chr_chain'
     ]} #add in extra format info
 
     n_headers = 0
@@ -48,6 +48,7 @@ def parse_format(format_file):
     node_primary_key = {}
     format_type = 0
     B_col_prop = False
+    chr_chain_info = {}
 
     # temporary variables
     attr_types = []
@@ -141,6 +142,22 @@ def parse_format(format_file):
             else:
                 node_primary_key[node].append(attr)
 
+        elif current_info == 'chr_chain':
+            info_included[current_info] = True
+            try:
+                [_chr_attribute, _pos_attribute, resolution] = line.split()
+            except Exception:
+                print(f'Warning: In chr_chain field, \"{line}\" not in the correct format. This line will be discarded.')
+                continue
+            [node, chr] = _chr_attribute.split('.')
+            [_temp, pos] = _pos_attribute.split('.')
+            if _temp != node:
+                raise ValueError('In chr_chain field, the same line\'s chr and pos attributes\' label has to match.')
+            chr_chain_info[node] = {}
+            chr_chain_info[node]["chr"] = chr
+            chr_chain_info[node]["pos"] = pos
+            chr_chain_info[node]["resolution"] = resolution
+
         else:
             pass
 
@@ -166,7 +183,7 @@ def parse_format(format_file):
         if not info_included[elm]:
             raise ValueError(f'Missing: {elm}')
 
-    return n_headers, file_name_pattern, nodes_and_edges, global_vals, columns, node_primary_key, B_col_prop
+    return n_headers, file_name_pattern, nodes_and_edges, global_vals, columns, node_primary_key, B_col_prop, chr_chain_info
 
 
 if __name__ == '__main__':

@@ -1,6 +1,12 @@
 import re
 import string
 from copy import deepcopy
+import math
+
+
+def find_start_loc(pos, resolution):
+    temp = math.floor(float(int(pos) - 1) / float(resolution)) * float(resolution) + 1
+    return int(temp)
 
 
 def convert(data_type):
