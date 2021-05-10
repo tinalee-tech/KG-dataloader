@@ -63,6 +63,8 @@ def match_re_nodes(pattern, s, nodes_and_edges):
         nodes_and_edges: (dict) the updated nodes_and_edges
     """
     result = re.match(pattern[0], s)
+    group_num = len(result.groups())
+    res = ''
     for i in range(len(pattern[1])):
         _info = pattern[1][i]  # ({node/edge name}, {attribute name}, {data type})
         if _info[0] not in nodes_and_edges:
@@ -70,17 +72,21 @@ def match_re_nodes(pattern, s, nodes_and_edges):
         if _info[1] not in nodes_and_edges[_info[0]]:
             continue
         _type = nodes_and_edges[_info[0]][_info[1]][1]
-        res = convert(_type)(result.group(i + 1))
-        nodes_and_edges[_info[0]][_info[1]] = (res, _type)
+        if group_num <= i:
+            # a single column corresponds to two label's attribute
+            nodes_and_edges[_info[0]][_info[1]] = (res, _type)
+        else:
+            res = convert(_type)(result.group(i + 1))
+            nodes_and_edges[_info[0]][_info[1]] = (res, _type)
     return nodes_and_edges
 
 
-def parse_re_nodes(s):
+def parse_re_nodes(list_s):
     """
     Using a given pattern from .format file to generate the re expression
 
     Args:
-        s: (str) e.g., {A.chr}_{A.pos}_{A.ref}_{A.alt}_b38
+        list_s: a list of strings e.g., [{A.chr}_{A.pos}_{A.ref}_{A.alt}_b38]
 
     Return:
         pattern: an re pattern + the attributes
@@ -92,27 +98,31 @@ def parse_re_nodes(s):
         > parse_re_nodes('{B.id}.{B.id_version}')
         > (re.compile('^(.*?)\.(.*?)$'), [('B', 'id'), ('B', 'id_version')])
     """
-    pat = ''  # the start and end of a string
+    final_pat = ''
     attributes_info = []
     temp = ''
     inside = False
-    for elm in s:
-        if elm == '{':
-            inside = True
-        elif elm == '}':
-            inside = False
-            _info = tuple(temp.split('.'))
-            attributes_info.append(_info)
-            temp = ''
-            pat += '(.*?)'  # non-greedy
-        elif inside:
-            temp += elm
-        elif elm in '.?*&^%$#()':
-            pat += '\\' + elm
-        else:
-            pat += elm
-    pat = '^' + pat + '$'
-    return re.compile(pat), attributes_info
+    for i, s in enumerate(list_s):
+        pat = ''  # the start and end of a string
+        for elm in s:
+            if elm == '{':
+                inside = True
+            elif elm == '}':
+                inside = False
+                _info = tuple(temp.split('.'))
+                attributes_info.append(_info)
+                temp = ''
+                pat += '(.*?)'  # non-greedy
+            elif inside:
+                temp += elm
+            elif elm in '.?*&^%$#()':
+                pat += '\\' + elm
+            else:
+                pat += elm
+        pat = '^' + pat + '$'
+        if i == 0:
+            final_pat = pat
+    return re.compile(final_pat), attributes_info
 
 
 def match_re_global(pattern, attributes_info, s):

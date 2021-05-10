@@ -37,7 +37,7 @@ def parse_format(format_file):
     """
     # record all required information
     info_included = {elm: False for elm in [
-        'format_type', 'file_name', 'headers', 'graph_pattern', 'line_format',
+        'format_type', 'file_name', 'headers', 'delimiter', 'graph_pattern', 'line_format',
         'global_variables', 'node_attributes', 'node_primary_keys', 'chr_chain'
     ]} #add in extra format info
 
@@ -49,6 +49,7 @@ def parse_format(format_file):
     format_type = 0
     B_col_prop = False
     chr_chain_info = {}
+    delimiter = ''
 
     # temporary variables
     attr_types = []
@@ -58,6 +59,7 @@ def parse_format(format_file):
     current_info = None
     for line in open(format_file):
         line = line.split('#')[0].strip()   #could start with no #
+        line = bytes(line, 'utf-8').decode('unicode_escape')
         if len(line) == 0:
             continue
 
@@ -91,25 +93,42 @@ def parse_format(format_file):
                 file_name_pattern = parse_re_global(line)
             info_included[current_info] = True
 
+        elif current_info == 'delimiter':
+            if info_included[current_info]:
+                raise ValueError(f'{current_info} more than 1 line!')
+            info_included[current_info] = True
+            delimiter = line
+
         elif current_info == 'graph_pattern':
             info_included[current_info] = True
             node_lines += line
 
         elif current_info == 'line_format':
             info_included[current_info] = True
-            [_colname, line_pattern] = line.split()
+            # TODO: one column correspond to two label's attributes
+            _temp = line.split()
+            line_pattern = []
+            for i, _string in enumerate(_temp):
+                if i == 0:
+                    _colname = _string
+                else:
+                    line_pattern.append(_string)
             if 'format_type' not in info_included.keys():
                 raise ValueError('format_type has to be defined before line_format!')
             if format_type == 1 and _colname == 'others':
                 B_col_prop = True
-            if '{' in line and '}' in line_pattern:
+            if '{' in line and '}' in line_pattern[0]:
                 columns.append(parse_re_nodes(line_pattern))
             else:
                 columns.append(None)  # this line is not important
 
         elif current_info == 'global_variables':
             info_included[current_info] = True
-            [_attribute, _others] = [elm.strip() for elm in line.split('=')]
+            try:
+                [_attribute, _others] = [elm.strip() for elm in line.split('=')]
+            except Exception:
+                print(f'Warning: In chr_chain field, \"{line}\" not in the correct format. This line will be discarded.')
+                continue
             [node, attr] = _attribute.split('.')
             [_var_name, _type] = _others.split()
             if '{' in _var_name and '}' in _var_name:  # dynamic
@@ -183,7 +202,8 @@ def parse_format(format_file):
         if not info_included[elm]:
             raise ValueError(f'Missing: {elm}')
 
-    return n_headers, file_name_pattern, nodes_and_edges, global_vals, columns, node_primary_key, B_col_prop, chr_chain_info
+    return n_headers, file_name_pattern, nodes_and_edges, global_vals, columns, node_primary_key, B_col_prop, \
+           chr_chain_info, delimiter
 
 
 if __name__ == '__main__':

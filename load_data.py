@@ -25,6 +25,7 @@ def importNeo(uri, user, password, nodes_and_edges, node_primary_key, chr_chain_
     # merge node
     cyp_node_name = {}
     total_cypher = ""
+    temp = ""
     for node in node_primary_key.keys(): #
         cypher = "MERGE (" + node.lower() + ":" + nodes_and_edges[node]['label'] + " {"
         onset = node.lower() + ".add_time = datetime(), "
@@ -54,17 +55,20 @@ def importNeo(uri, user, password, nodes_and_edges, node_primary_key, chr_chain_
 
             # merge the node's edge on chr_chain if applicable
             if node in chr_chain_info.keys():
-                cypher = ""
-                temp = ""
-                for node in chr_chain_info.keys():
-                    resolution = chr_chain_info[node]["resolution"]
-                    temp += node.lower() + ", "
-                    pos = find_start_loc(nodes_and_edges[node][chr_chain_info[node]["pos"]][0], resolution)
-                    cypher = "MATCH (n:chr_chain) WHERE n.chr = \"" + \
-                             nodes_and_edges[node][chr_chain_info[node]["chr"]][0] + "\" AND " + \
-                             "n.resolution = " + chr_chain_info[node]["resolution"] + " AND " + "n.start_loc = " + str(
-                        pos) + \
-                             " MERGE (" + node.lower() + ") - [:locate_in {type: \"chr_chain\"}] -> (n) "
+                resolution = chr_chain_info[node]["resolution"]
+                temp += node.lower() + ", "
+                pos = find_start_loc(nodes_and_edges[node][chr_chain_info[node]["pos"]][0], resolution)
+                # Optional matches ensures if chr_chain can't be found, no error will be thrown, other merges still run
+                cypher = "OPTIONAL MATCH (n:chr_chain) WHERE n.chr = \"" + \
+                        nodes_and_edges[node][chr_chain_info[node]["chr"]][0] + "\" AND " + \
+                        "n.resolution = " + chr_chain_info[node]["resolution"] + " AND " + "n.start_loc = " + str(
+                        pos) + " FOREACH (node IN [x in [n] WHERE x is not NULL] |" + \
+                         " MERGE (" + node.lower() + ") - [:locate_in {type: \"chr_chain\"}] -> (node) ) "
+                # TODO: If all chr_chain have been added, above line change to following to increase efficiency
+                # cypher = "MATCH (n:chr_chain) WHERE n.chr = \"" + \
+                #         nodes_and_edges[node][chr_chain_info[node]["chr"]][0] + "\" AND " + \
+                #         "n.resolution = " + chr_chain_info[node]["resolution"] + " AND " + "n.start_loc = " + str(
+                #         pos) + " MERGE (" + node.lower() + ") - [:locate_in {type: \"chr_chain\"}] -> (n) "
                 total_cypher += "WITH " + temp[:-2] + " " + cypher
 
     # merge edge
@@ -74,7 +78,6 @@ def importNeo(uri, user, password, nodes_and_edges, node_primary_key, chr_chain_
         node1 = nodes_and_edges[edge]['from']
         node2 = nodes_and_edges[edge]['to']
 
-        cypher = ""
         if node1 not in cyp_node_name.keys() and node2 not in cyp_node_name.keys():
             cypher = "MATCH (" + node1.lower() + ":" + nodes_and_edges[node1]['label'] + "), (" + node2.lower() + ":" + nodes_and_edges[node2]['label'] + ") WHERE "
             for node, n in zip([node1, node2], [node1.lower() + '.', node2.lower() + '.']):
@@ -83,6 +86,7 @@ def importNeo(uri, user, password, nodes_and_edges, node_primary_key, chr_chain_
                         cypher = cypher + n + attr + " = \"" + nodes_and_edges[node][attr][0] + "\" AND "
                     else:
                         cypher = cypher + n + attr + " = " + str(nodes_and_edges[node][attr][0]) + " AND "
+            total_cypher = total_cypher + "WITH " + temp[:-2] + " " + cypher[:-4]
         elif node1 not in cyp_node_name.keys():
             cypher = "MATCH (" + node1.lower() + ":" + nodes_and_edges[node1]['label'] + ") WHERE "
             for node, n in zip([node1], [node1.lower() + '.']):
@@ -91,6 +95,7 @@ def importNeo(uri, user, password, nodes_and_edges, node_primary_key, chr_chain_
                         cypher = cypher + n + attr + " = \"" + nodes_and_edges[node][attr][0] + "\" AND "
                     else:
                         cypher = cypher + n + attr + " = " + str(nodes_and_edges[node][attr][0]) + " AND "
+            total_cypher = total_cypher + "WITH " + temp[:-2] + " " + cypher[:-4]
         elif node2 not in cyp_node_name.keys():
             cypher = "MATCH (" + node2.lower() + ":" + nodes_and_edges[node2]['label'] + ") WHERE "
             for node, n in zip([node2], [node2.lower() + '.']):
@@ -99,9 +104,7 @@ def importNeo(uri, user, password, nodes_and_edges, node_primary_key, chr_chain_
                         cypher = cypher + n + attr + " = \"" + nodes_and_edges[node][attr][0] + "\" AND "
                     else:
                         cypher = cypher + n + attr + " = " + str(nodes_and_edges[node][attr][0]) + " AND "
-
-        # match has to be in front of merge (cypher restriction)
-        total_cypher = cypher[:-4] + total_cypher
+            total_cypher = total_cypher + "WITH " + temp[:-2] + " " + cypher[:-4]
 
         edgepropstr = " {"
         exist = False # check if edge property do exist
@@ -135,7 +138,8 @@ def load_tabular_data(format_file, data_files, uri, user, password):
         user: neo4j database username
         password: neo4j database password
     """
-    n_headers, file_name_pattern, nodes_and_edges, global_vals, columns, node_primary_key, is_matrix, chr_chain_info = parse_format(format_file)
+    n_headers, file_name_pattern, nodes_and_edges, global_vals, columns, node_primary_key, is_matrix, chr_chain_info, \
+    delimiter = parse_format(format_file)
 
     if is_matrix:
         raise ValueError(f'Format file provided not a tabular one!')
@@ -198,7 +202,7 @@ def load_tabular_data(format_file, data_files, uri, user, password):
             if data_file.endswith('.gz'):  # the gzip files also need to be decoded
                 line = line.decode('utf-8')
 
-            lst = line.split()
+            lst = line.strip().split(delimiter)
             nodes_and_edges_for_this_line = deepcopy(nodes_and_edges_for_this_file) #could be modified to improve efficiency
 
             for s, pattern in zip(lst, columns):
@@ -296,7 +300,7 @@ def load_matrix_data(format_file, data_files, uri, user, password):
                     B_col_attrs = temp[loc:]
                 continue
 
-            lst = line.split()
+            lst = line.strip().split('\t')
 
             # save variables from cnt == 2
             if cnt == 2:

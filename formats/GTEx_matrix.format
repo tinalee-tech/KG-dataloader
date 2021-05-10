@@ -24,7 +24,7 @@ node:B{  # node B is the dimension 2 node
 edge:C{
     label = express_in,  # label don't contain spaces (neo4j format restriction)
     from = A,
-    to = B
+    to =
 }
 
 >line_format
