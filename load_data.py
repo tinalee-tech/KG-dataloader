@@ -88,6 +88,7 @@ def importNeo(uri, user, password, nodes_and_edges, node_primary_key, chr_chain_
                         cypher = cypher + n + attr + " = " + str(nodes_and_edges[node][attr][0]) + " AND "
             total_cypher = total_cypher + "WITH " + temp[:-2] + " " + cypher[:-4]
         elif node1 not in cyp_node_name.keys():
+            temp = node2.lower() + ", "
             cypher = "MATCH (" + node1.lower() + ":" + nodes_and_edges[node1]['label'] + ") WHERE "
             for node, n in zip([node1], [node1.lower() + '.']):
                 for attr in node_primary_key[node]:
@@ -97,6 +98,7 @@ def importNeo(uri, user, password, nodes_and_edges, node_primary_key, chr_chain_
                         cypher = cypher + n + attr + " = " + str(nodes_and_edges[node][attr][0]) + " AND "
             total_cypher = total_cypher + "WITH " + temp[:-2] + " " + cypher[:-4]
         elif node2 not in cyp_node_name.keys():
+            temp = node1.lower() + ", "
             cypher = "MATCH (" + node2.lower() + ":" + nodes_and_edges[node2]['label'] + ") WHERE "
             for node, n in zip([node2], [node2.lower() + '.']):
                 for attr in node_primary_key[node]:
@@ -178,7 +180,6 @@ def load_tabular_data(format_file, data_files, uri, user, password):
             # not the intended file
             continue
         print('Global vars:', global_variables)
-        # ('C', 'tissue', 'Adipose_Subcutaneous', 'str') -> edge C, attribute: tissue, value: Adi..., type: str
 
         nodes_and_edges_for_this_file = deepcopy(nodes_and_edges) #could be modified to improve efficiency
         for (n, attr, value, _type) in global_variables:

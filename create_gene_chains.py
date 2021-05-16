@@ -21,7 +21,7 @@ def create_gene_chains(uri, user, password, chrom_size_file):
 
         prev_resolution = 50000
         # for resolution in [20000, 10000, 5000, 1000, 200]:
-        for resolution in [50000, 20000, 10000, 5000, 1000, 200]:
+        for resolution in [20000, 10000, 5000, 1000, 200]:
             num = math.ceil(float(end) / float(resolution))
             end_res = num * resolution
             for i in range(num):
@@ -63,11 +63,11 @@ def create_gene_chains(uri, user, password, chrom_size_file):
 
     f.close()
 
-if __name__ == "__main__":
-    os.system("ssh -L 7687:localhost:7687 jieliulab.dcmb.med.umich.edu")
 
+if __name__ == "__main__":
     uri = "bolt://localhost:7687"
     user = 'neo4j'
-    password = 'password'
+    # password = 'password'
+    password = '4DN'
 
     create_gene_chains(uri, user, password, sys.argv[1])

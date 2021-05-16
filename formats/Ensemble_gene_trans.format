@@ -32,6 +32,7 @@ edge:C{
 >line_format
 # column_name column_information (the order must be right! And all columns have to be present!)
 # if that column is not important, just put a "None" (actually anything without a '{}' would work)
+# if one column corresponds to two label's attribute, list the two attribute in the same line separate by a space
 Gene_stable_ID {A.id}
 Gene_stable_ID_version {A.id}.{A.id_version}
 Transcript_stable_ID {B.id}

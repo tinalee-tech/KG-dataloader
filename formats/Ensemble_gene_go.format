@@ -1,0 +1,57 @@
+# gene_transcript_go data format
+# all contents after '#' are comments and will not be loaded
+# all '{}'s are regular expressions, but the data type has to be defined in a block
+
+>format_type
+# indicate whether data file is in tabular format or matrix format
+# 0: tabular, 1: matrix
+0
+
+>file_name # If it is not a regular expression, this part is not important and you can provide anything
+None
+
+>headers # number of header lines
+1 # can only have 1 line
+
+>delimiter # type of delimiter for the data file
+\t
+
+>graph_pattern # all nodes and edges and their labels
+node:A{
+    label = gene
+}
+node:B{
+    label = Ontology
+}
+edge:C{
+    label = belongs_to,  # label don't contain spaces (neo4j format restriction)
+    from = A,
+    to = B
+}
+
+>line_format
+# column_name column_information (the order must be right! And all columns have to be present!)
+# if that column is not important, just put a "None" (actually anything without a '{}' would work)
+# if one column corresponds to two label's attribute, list the two attribute in the same line separate by a space
+
+
+>global_variables
+# variables that apply to all nodes/edges
+# If there's none to be added, put a None (or any single string)
+None
+
+>node_attributes
+# record the attributes and their data types that will be in the graph
+
+
+>node_primary_keys
+# specify the attributes to be matched (primary keys) for a node when merging into neo4j database (edges don't have primary keys)
+# on match renew other attributes
+# otherwise create new node
+
+>chr_chain
+# specify which label is to be connected to what chr_chain node
+# In the same line,
+# first string is taken as the attribute for chr number, second string is taken as for the location,
+# thrid string is taken as for the resolution. (has to give three strings per line)
+# If there's no chr_chain to be added, fill this field with a None (or any single string)
