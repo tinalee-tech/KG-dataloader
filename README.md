@@ -14,12 +14,12 @@ This data loader program is intended to load raw data into the neo4j knowledge b
 
 Users could be able to run the dataloader using the following command in terminal:
 ```
-python load_data.py [-i URI] <format file> <data files>
+python3 csv_loader.py [-i URI] <format file> <data file directory>
 ```
 
 The required arguments are:
   * \<format file\>:  The required .format file for dataloader is specially defined.  Please refer to following sections for the detailed description.
-  * \<data file\>: The directory including all the data files to be loaded into the knowledge graph.
+  * \<data file\>: The directory of the data files to be loaded into the knowledge graph.
 
 The optional arguments are:
   * [-i URI]: The URL of the neo4j knowledge base. Without specification, by default usesbolt://localhost:7687
@@ -29,7 +29,7 @@ Upon successful compilation of the program, users will first be prompted for neo
 ## Examples
 
 ```
-python3 load_data.py GTEx.format ./GTEx/GTEx_Analysis_v8_eQTL
+python3 csv_loader.py GTEx.format ./GTEx/GTEx_Analysis_v8_eQTL
 ```
 
 This command will load every datafile under the path ./GTEx/GTEx\_Analysis\_v8\_eQTL into the database that's currently running on bolt://localhost:7687 using the given GTEx.format file. 
