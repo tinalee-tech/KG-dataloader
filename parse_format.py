@@ -1,6 +1,5 @@
 from utils import parse_re_global, parse_re_nodes, parse_nodes_edges, convert
 
-
 def parse_format(format_file):
     """
     Parse information from the .format file of tabular/matrix data
@@ -24,9 +23,9 @@ def parse_format(format_file):
                     }
                 }
         global_vals: global vars that's loaded from file names
-                e.g., {'tissue':
+                e.g., [{'tissue':
                     ('C', 'tissue', 'str')  # (node/edge name, attribute, data type)
-                }
+                }]
         columns: the formats for each column
                 e.g. [(re.compile('^(.*?)_(.*?)_(.*?)_(.*?)_b38$'), [('A', 'chr'), ('A', 'pos'), ('A', 'ref'), ('A', 'alt')]),
                         (re.compile('^(.*?)$'), [('B', 'name')])]
@@ -136,7 +135,10 @@ def parse_format(format_file):
                 _type = _type[1:-1]
                 if _var_name not in file_name_pattern[1]:
                     raise ValueError(f'Global var {_var_name} cannot be loaded from any places!')
-                global_vals[_var_name] = (node, attr, _type)
+                if _var_name not in global_vals.keys():
+                    global_vals[_var_name] = [(node, attr, _type)]
+                else:
+                    global_vals[_var_name].append((node, attr, _type))
             else:  # fixed global vars
                 _type = _type[1:-1]
                 if _var_name == 'x':
@@ -164,18 +166,24 @@ def parse_format(format_file):
         elif current_info == 'chr_chain':
             info_included[current_info] = True
             try:
-                [_chr_attribute, _pos_attribute, resolution] = line.split()
+                [_chr_attribute, _start_pos, _end_pos, resolution] = line.split()
             except Exception:
                 print(f'Warning: In chr_chain field, \"{line}\" not in the correct format. This line will be discarded.')
                 continue
             [node, chr] = _chr_attribute.split('.')
-            [_temp, pos] = _pos_attribute.split('.')
+            [_temp, start_loc] = _start_pos.split('.')
+            [_temp, end_loc] = _end_pos.split('.')
             if _temp != node:
                 raise ValueError('In chr_chain field, the same line\'s chr and pos attributes\' label has to match.')
-            chr_chain_info[node] = {}
-            chr_chain_info[node]["chr"] = chr
-            chr_chain_info[node]["pos"] = pos
-            chr_chain_info[node]["resolution"] = resolution
+            info = {}
+            info["chr"] = chr
+            info["start_loc"] = start_loc
+            info["end_loc"] = end_loc
+            info["resolution"] = resolution
+            if node not in chr_chain_info.keys():
+                chr_chain_info[node] = [info]
+            else:
+                chr_chain_info[node].append(info)
 
         else:
             pass
@@ -195,8 +203,9 @@ def parse_format(format_file):
     for (node, attr, _type) in attr_types:
         nodes_and_edges[node][attr] = (None, _type)
 
-    for (node, attr, _type) in global_vals.values():
-        nodes_and_edges[node][attr] = (None, _type)
+    for list in global_vals.values():
+        for (node, attr, _type) in list:
+            nodes_and_edges[node][attr] = (None, _type)
 
     for elm in info_included:
         if not info_included[elm]:

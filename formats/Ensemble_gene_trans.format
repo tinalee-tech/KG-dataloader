@@ -11,7 +11,7 @@
 None
 
 >headers # number of header lines
-1 # can only have 1 line
+1
 
 >delimiter # type of delimiter for the data file
 \t
@@ -49,14 +49,17 @@ Transcript_length {B.trans_length}
 GENCODE_basic_annotation {A.gencode_annotation}
 Gene_name {A.name}
 Transcript_name	{B.name}
-Gene_%_GC_content {A.GC_content_percentage}
+Transcript_count {B.count}
+Gene_%_GC_content {A.GC_percentage}
 Gene_type {A.type}
 Transcript_type {B.type}
 
 >global_variables
 # variables that apply to all nodes/edges
 # If there's none to be added, put a None (or any single string)
-None
+A.data_source = Ensembl (str)
+B.data_source = Ensembl (str)
+C.data_source = Ensembl (str)
 
 >node_attributes
 # record the attributes and their data types that will be in the graph
@@ -69,7 +72,7 @@ A.end_loc (int)
 A.strand (int)
 A.gencode_annotation (str)
 A.name (str)
-A.GC_content_percentage (float)
+A.GC_percentage (float)
 A.type (str)
 B.id (str)
 B.id_version (str)
@@ -80,6 +83,7 @@ B.tss (int)
 B.trans_length (int)
 B.name (str)
 B.type (str)
+B.count (int)
 
 >node_primary_keys
 # specify the attributes to be matched (primary keys) for a node when merging into neo4j database (edges don't have primary keys)
@@ -91,8 +95,8 @@ B.id (str)
 >chr_chain
 # specify which label is to be connected to what chr_chain node
 # In the same line,
-# first string is taken as the attribute for chr number, second string is taken as for the location,
-# thrid string is taken as for the resolution. (has to give three strings per line)
+# first string is taken as the attribute for chr number, second string is taken as for the starting location,
+# thrid string is taken as for the last resolution, fourth string is taken as for the resolution. (has to give four strings per line)
 # If there's no chr_chain to be added, fill this field with a None (or any single string)
-A.chr A.start_loc 50000
-B.chr B.start_loc 50000
+A.chr A.start_loc A.end_loc 200
+B.chr B.start_loc B.end_loc 200

@@ -11,58 +11,65 @@
 None
 
 >headers # number of header lines
-1 # can only have 1 line
+2
 
 >delimiter # type of delimiter for the data file
 \t
 
 >graph_pattern # all nodes and edges and their labels
 node:A{
-    label = gene
-}
-node:B{
-    label = ontology
-}
-edge:C{
-    label = belong_to,  # label don't contain spaces (neo4j format restriction)
-    from = A,
-    to = B
+    label = TAD
 }
 
 >line_format
 # column_name column_information (the order must be right! And all columns have to be present!)
 # if that column is not important, just put a "None" (actually anything without a '{}' would work)
 # if one column corresponds to two label's attribute, list the two attribute in the same line separate by a space
-Gene_stable_ID {A.id}
-Gene_stable_ID_version {A.id}.{A.id_version}
-GO_term_accession {B.id}
-GO_term_name {B.name}
+chr1 {A.chr}
+x1 {A.start_loc}
+x2 {A.end_loc}
+chr2 None
+y1 None
+y2 None
+name None
+score None
+strand1 None
+strand2 None
+color None
+score {A.score}
+uVarScore None
+lVarScore None
+upSign None
+loSign None
 
 >global_variables
 # variables that apply to all nodes/edges
 # If there's none to be added, put a None (or any single string)
-A.data_source = Ensembl (str)
-B.data_source = Ensembl (str)
-C.data_source = Ensembl (str)
+A.data_source = 4DN (str)
+A.cell_line = HiC_GM12878 (str)
+A.resolution = 5000 (int)
+A.caller = juicer_tools_1.11.04 (str)
 
 >node_attributes
 # record the attributes and their data types that will be in the graph
-A.id (str)
-A.id_version (str)
-B.id (str)
-B.name (str)
+# not including the global variables
+A.chr (str)
+A.start_loc (int)
+A.end_loc (int)
+A.score (float)
 
 >node_primary_keys
 # specify the attributes to be matched (primary keys) for a node when merging into neo4j database (edges don't have primary keys)
 # on match renew other attributes
 # otherwise create new node
-A.id (str)
-B.id (str)
+A.chr (str)
+A.start_loc (int)
+A.end_loc (int)
 
 >chr_chain
 # specify which label is to be connected to what chr_chain node
 # In the same line,
-# first string is taken as the attribute for chr number, second string is taken as for the location,
-# thrid string is taken as for the resolution. (has to give three strings per line)
+# first string is taken as the attribute for chr number, second string is taken as for the starting location,
+# thrid string is taken as for the last resolution, fourth string is taken as for the resolution. (has to give four strings per line)
 # If there's no chr_chain to be added, fill this field with a None (or any single string)
-None
+A.chr A.start_loc A.end_loc 5000

@@ -8,11 +8,14 @@
 1
 
 >file_name # If it is not a regular expression, this part is not important and you can provide anything
-None
+GTEx_Analysis_2017-06-05_v{version}_RNASeQCv1.1.9_gene_median_tpm.gct
 
 >headers
 # number of header lines not including the first row of matrix definition (different from tabular data format)
 2
+
+>delimiter # type of delimiter for the data file
+\t
 
 >graph_pattern # all nodes and edges and their labels
 node:A{  # For matrix format, node A is taken as the dimension 1 node
@@ -24,26 +27,29 @@ node:B{  # node B is the dimension 2 node
 edge:C{
     label = express_in,  # label don't contain spaces (neo4j format restriction)
     from = A,
-    to =
+    to = B
 }
 
 >line_format
 # column_name attribute_name
 # Note the order must be right! And the columns (not including the last "others") listed are the first k columns that're attributes for dimension 1 node.
-# IMPORTANT: The last line must be 'others', indicating all other columns left are the attribute of dimension 2 node
+# IMPORTANT: The last one must be 'others', indicating all other columns left are the attribute of dimension 2 node
 #       e.g. others {B.name}
 Name {A.id}.{A.id_version}  # ENSG00000227232.5, GENCODE/Ensembl gene ID
-Description {A.description}
+Description None
 others {B.name}
 
 >global_variables
 # variables that apply to all nodes/edges
 C.median_expression_value = x (float)  # if value is x, means this variable is the edge property of this matrix file
+B.GTEx_version = {version} (int)
+C.GTEx_version = {version} (int)
+B.data_source = GTEx (str)
+C.data_source = GTEx (str)
 
 >node_attributes
 # record the attributes and their data types that will be in the graph (from the matrix data, not including the global ones)
 A.id (str)
-A.description (str)
 B.name (str)
 
 >node_primary_keys
@@ -53,4 +59,11 @@ B.name (str)
 A.id (str)
 B.name (str)
 
+>chr_chain
+# specify which label is to be connected to what chr_chain node
+# In the same line,
+# first string is taken as the attribute for chr number, second string is taken as for the starting location,
+# thrid string is taken as for the last resolution, fourth string is taken as for the resolution. (has to give four strings per line)
+# If there's no chr_chain to be added, fill this field with a None (or any single string)
+None
 

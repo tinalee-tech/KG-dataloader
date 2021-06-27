@@ -11,95 +11,44 @@
 None
 
 >headers # number of header lines
-1 # can only have 1 line
+1
+
+>delimiter # type of delimiter for the data file
+,
 
 >graph_pattern # all nodes and edges and their labels
 node:A{
-    label = gene
-}
-node:B{
     label = transcript
 }
-node:C{
-    label = go
+node:B{
+    label = exon
 }
-node:D{
-    label = protein
-}
-edge:E{
-    label = transcribe_into,  # label don't contain spaces (neo4j format restriction)
+edge:C{
+    label = include,  # label don't contain spaces (neo4j format restriction)
     from = A,
     to = B
-}
-edge:F{
-    label = translate_into,
-    from = B,
-    to = D
-}
-edge:G{
-    label = belongs_to,
-    from = A,
-    to = C
 }
 
 >line_format
 # column_name column_information (the order must be right! And all columns have to be present!)
 # if that column is not important, just put a "None" (actually anything without a '{}' would work)
-Gene_stable_ID {A.id}
-Gene_stable_ID_version {A.id}.{A.id_version}
-Transcript_stable_ID {B.id}
-Transcript_stable_ID_version {B.id}.{B.id_version}
-Protein_stable_ID {D.id}
-Protein_stable_ID_version {D.id}.{D.id_version}
-Gene_description {A.description}
-Chromosome_scaffold_name {A.chr} {B.chr} # second label's attribute has to be of the same regex format as that of the first one
-Gene_start_(bp)	{A.start_loc}
-Gene_end_(bp) {A.end_loc}
-Strand {A.strand}
-Transcript_start_(bp) {B.start_loc}
-Transcript_end_(bp) {B.end_loc}
-Transcription_start_site_(TSS) {B.tss}
-Transcript_length {B.trans_length}
-GENCODE_basic_annotation {A.gencode_annotation}
-Gene_name {A.name}
-Transcript_name	{B.name}
-Gene_%_GC_content {A.gc_content_percentage}
-Gene_type {A.type}
-Transcript_type {B.type}
-GO_term_accession {C.accession}
-GO_term_name {C.name}
+# if one column corresponds to two label's attribute, list the two attribute in the same line separate by a space
+Transcript_stable_ID {A.id}
+Transcript_stable_ID_version {A.id}.{A.id_version}
+Exon_stable_ID {B.id}
 
 >global_variables
 # variables that apply to all nodes/edges
 # If there's none to be added, put a None (or any single string)
-None
+A.data_source = Ensembl (str)
+B.data_source = Ensembl (str)
+C.data_source = Ensembl (str)
 
 >node_attributes
 # record the attributes and their data types that will be in the graph
 A.id (str)
 A.id_version (str)
-A.description (str)
-A.chr (str)
-A.start_loc (int)
-A.end_loc (int)
-A.strand (int)
-A.gencode_annotation (str)
-A.name (str)
-A.GC_content_percentage (float)
-A.type (str)
 B.id (str)
-B.id_version (str)
-B.chr (str)
-B.start_loc (int)
-B.end_loc (int)
-B.tss (int)
-B.trans_length (int)
-B.name (str)
-B.type (str)
-C.accession (str)
-C.name (str)
-D.id (str)
-D.id_version (str)
 
 >node_primary_keys
 # specify the attributes to be matched (primary keys) for a node when merging into neo4j database (edges don't have primary keys)
@@ -107,8 +56,6 @@ D.id_version (str)
 # otherwise create new node
 A.id (str)
 B.id (str)
-C.accession (str)
-D.id (str)
 
 >chr_chain
 # specify which label is to be connected to what chr_chain node
@@ -116,5 +63,4 @@ D.id (str)
 # first string is taken as the attribute for chr number, second string is taken as for the location,
 # thrid string is taken as for the resolution. (has to give three strings per line)
 # If there's no chr_chain to be added, fill this field with a None (or any single string)
-A.chr A.start_loc 200
-B.chr B.start_loc 200
+None

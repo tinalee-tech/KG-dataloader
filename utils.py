@@ -3,11 +3,26 @@ import string
 from copy import deepcopy
 import math
 
+def neo4j_type_convert(data_type):
+    if data_type == 'str':
+        return "toString"
+    elif data_type == 'int':
+        return "toInteger"
+    elif data_type == 'float':
+        return "toFloat"
 
 def find_start_loc(pos, resolution):
-    temp = math.floor(float(int(pos) - 1) / float(resolution)) * float(resolution) + 1
+    temp = math.floor(float(int(pos)) / float(int(resolution))) * float(int(resolution))
     return int(temp)
 
+def find_all_start_locs(start_loc, end_loc, resolution):
+    assert int(start_loc) <= int(end_loc)
+    if start_loc == end_loc:
+        return [find_start_loc(start_loc, resolution)]
+    start_pos = find_start_loc(start_loc, resolution)
+    end_pos = find_start_loc(end_loc - 1, resolution) # assuming end location is non-inclusive
+    all_start_locs = [i for i in range(start_pos, end_pos + int(resolution), int(resolution))]
+    return all_start_locs
 
 def convert(data_type):
     """
@@ -47,7 +62,7 @@ def convert_attribute(col):
     for char in string.punctuation:
         col = col.replace(char, " ")
     # merge continuous spaces into one, then replace all spaces with "_"
-    return ' '.join(col.split()).replace(" ", "_").lower()
+    return ' '.join(col.split()).replace(" ", "_")
 
 
 def match_re_nodes(pattern, s, nodes_and_edges):
@@ -62,7 +77,10 @@ def match_re_nodes(pattern, s, nodes_and_edges):
     Return:
         nodes_and_edges: (dict) the updated nodes_and_edges
     """
-    result = re.match(pattern[0], s)
+    if s == "":
+        result = re.match('^(.*?)$', s)
+    else:
+        result = re.match(pattern[0], s)
     group_num = len(result.groups())
     res = ''
     for i in range(len(pattern[1])):
@@ -76,7 +94,10 @@ def match_re_nodes(pattern, s, nodes_and_edges):
             # a single column corresponds to two label's attribute
             nodes_and_edges[_info[0]][_info[1]] = (res, _type)
         else:
-            res = convert(_type)(result.group(i + 1))
+            if s != "":
+                res = convert(_type)(result.group(i + 1))
+            else:
+                res = result.group(i + 1)
             nodes_and_edges[_info[0]][_info[1]] = (res, _type)
     return nodes_and_edges
 
@@ -131,8 +152,7 @@ def match_re_global(pattern, attributes_info, s):
 
     Args:
         pattern: function "parse_re_global"'s output re pattern
-        attributes_info: (dict) the information of the corresponding attributes ({node/edge name}, {attribute name})
-            e.g., [('B', 'id'), ('B', 'id_version')]
+        attributes_info: (list of dict) global_vals
         s: (str) the giving string
 
     Return:
@@ -143,9 +163,10 @@ def match_re_global(pattern, attributes_info, s):
         return global_variables
     result = re.match(pattern[0], s)
     for i, name in enumerate(pattern[1]):
-        node, attr, _type = attributes_info[name]  # ({node/edge name}, {attribute name}, {data type})
-        res = convert(_type)(result.group(i + 1))
-        global_variables.append((node, attr, res, _type))
+        for j in range(len(attributes_info[name])):
+            node, attr, _type = attributes_info[name][j]  # ({node/edge name}, {attribute name}, {data type})
+            res = convert(_type)(result.group(i + 1))
+            global_variables.append((node, attr, res, _type))
     return global_variables
 
 
